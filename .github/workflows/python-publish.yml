@@ -1,0 +1,505 @@
+import os
+import sqlite3
+import tkinter as tk
+from datetime import datetime
+from tkinter import ttk, messagebox, simpledialog
+
+import win32api
+import win32print
+from PIL import Image, ImageTk
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen import canvas
+
+
+def criar_entry(frame, label_text, row):
+    label = ttk.Label(frame, text=label_text)
+    label.grid(row=row, column=0, padx=5, pady=5, sticky="e")
+    entry = ttk.Entry(frame)
+    entry.grid(row=row, column=1, padx=5, pady=5, sticky="ew")
+    return entry
+
+
+def selecionar_impressora():
+    impressoras = [printer[2] for printer in
+                   win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS)]
+    impressora_selecionada = simpledialog.askstring("Selecionar Impressora", "Escolha uma impressora:",
+                                                    initialvalue=impressoras[0])
+    return impressora_selecionada
+
+
+def obter_impressoras_instaladas():
+    try:
+        import win32print
+        return win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL, None, 1)
+    except ImportError:
+        messagebox.showerror("Erro", "Módulo win32print não encontrado.")
+        return []
+
+
+class GerenciadorOrdensServico:
+    def __init__(self):
+        self.index_selecionado = None
+        self.label_info = None
+        self.label_background = None
+        self.listbox_pdfs = None
+        self.listbox_ordens = None
+        self.combobox_status = None
+        self.entry_defeito = None
+        self.entry_numero_serie = None
+        self.entry_modelo = None
+        self.entry_marca = None
+        self.entry_email = None
+        self.entry_endereco = None
+        self.entry_telefone = None
+        self.entry_cpf_cnpj = None
+        self.entry_nome = None
+        self.entry_data_final = None
+        self.entry_data_inicio = None
+        self.background_label = None
+        self.background_photo = None
+        self.logo_photo = None
+        self.background_image = None
+        self.logo_label = None
+        self.logo_image = None
+        self.entry_relatorio = None
+        self.img_logo = None
+        self.conn = sqlite3.connect('ordens_servico.db')
+        self.cursor = self.conn.cursor()
+        self.criar_tabela()
+
+        self.window = tk.Tk()
+        self.window.title("Gerenciador de Ordens de Serviço")
+
+        cor_azul_claro = "#ADD8E6"
+        "#D3D3D3"
+        "#90EE90"
+
+        # Configurar cor de fundo principal
+        self.window.configure(bg=cor_azul_claro)
+
+        # Carregar imagens
+        self.logo_path = "logo.png"
+        self.background_path = "background.png"
+
+        # Carregar o logo
+        self.carregar_logotipo()
+
+        # Configurar imagem de fundo
+        self.configurar_imagem_de_fundo()
+
+        # Informações sobre o programa
+        self.versao = "1.1"
+        self.data_criacao = "18/06/2024"
+        self.nome_criador = "John Patrick"
+        self.telefone_criador = "(62) 9-9814-5605"
+        self.email_criador = "tecboxon@gmail.com"
+
+        self.logo_path = "logo.png"
+        self.background_path = "background.jpg"
+
+        self.setup_gui()
+
+        self.carregar_logotipo()
+        self.configurar_imagem_de_fundo()
+        self.atualizar_informacoes_programa()
+        self.atualizar_listagem_ordens()
+        self.atualizar_listagem_pdfs()
+
+        self.window.mainloop()
+
+    def criar_tabela(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS ordens_servico (
+                id INTEGER PRIMARY KEY,
+                nome_cliente TEXT NOT NULL,
+                cpf_cnpj TEXT NOT NULL,
+                telefone TEXT,
+                endereco TEXT,
+                email TEXT,
+                marca TEXT,
+                modelo TEXT,
+                numero_serie TEXT,
+                defeito TEXT,
+                relatorio TEXT,
+                data_inicio TEXT,
+                data_final TEXT,
+                status TEXT,
+                data_criacao TEXT
+            )
+        ''')
+        self.conn.commit()
+
+    def setup_gui(self):
+        frame_cliente = ttk.LabelFrame(self.window, text="Dados do Cliente")
+        frame_cliente.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
+
+        self.entry_nome = criar_entry(frame_cliente, "Nome:", 0)
+        self.entry_cpf_cnpj = criar_entry(frame_cliente, "CPF/CNPJ:", 1)
+        self.entry_telefone = criar_entry(frame_cliente, "Telefone:", 2)
+        self.entry_endereco = criar_entry(frame_cliente, "Endereço:", 3)
+        self.entry_email = criar_entry(frame_cliente, "E-mail:", 4)
+
+        frame_equipamento = ttk.LabelFrame(self.window, text="Dados do Equipamento")
+        frame_equipamento.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+
+        self.entry_marca = criar_entry(frame_equipamento, "Marca:", 0)
+        self.entry_modelo = criar_entry(frame_equipamento, "Modelo:", 1)
+        self.entry_numero_serie = criar_entry(frame_equipamento, "Número de Série:", 2)
+        self.entry_defeito = criar_entry(frame_equipamento, "Defeito:", 3)
+        self.entry_defeito = criar_entry(frame_equipamento, "relatorio:", 4)
+        self.entry_defeito = criar_entry(frame_equipamento, "data inicio:", 5)
+        self.entry_defeito = criar_entry(frame_equipamento, "data final:", 6)
+
+        frame_botoes = ttk.Frame(self.window)
+        frame_botoes.grid(row=2, column=0, padx=10, pady=5, sticky="ew")
+
+        self.combobox_status = ttk.Combobox(frame_botoes, values=["Aberta", "Em Andamento", "Concluída", "Cancelada"],
+                                            state="readonly")
+        self.combobox_status.set("Aberta")
+        self.combobox_status.pack(side=tk.LEFT, padx=5)
+
+        btn_cadastrar = ttk.Button(frame_botoes, text="Cadastrar", command=self.cadastrar_ordem)
+        btn_cadastrar.pack(side=tk.LEFT, padx=5)
+
+        btn_editar = ttk.Button(frame_botoes, text="Editar", command=self.editar_ordem)
+        btn_editar.pack(side=tk.LEFT, padx=5)
+
+        btn_excluir = ttk.Button(frame_botoes, text="Excluir", command=self.excluir_ordem)
+        btn_excluir.pack(side=tk.LEFT, padx=5)
+
+        btn_gerar_pdf = ttk.Button(frame_botoes, text="Gerar PDF", command=self.gerar_pdf)
+        btn_gerar_pdf.pack(side=tk.LEFT, padx=5)
+
+        frame_listagem_ordens = ttk.LabelFrame(self.window, text="Listagem de Ordens de Serviço")
+        frame_listagem_ordens.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
+
+        self.listbox_ordens = tk.Listbox(frame_listagem_ordens, width=80, height=11)
+        self.listbox_ordens.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+        self.listbox_ordens.bind("<<ListboxSelect>>", self.selecionar_ordem)
+
+        frame_botoes_extra = ttk.Frame(self.window)
+        frame_botoes_extra.grid(row=3, column=0, padx=10, pady=5, sticky="ew")
+
+        btn_atualizar_ordens = ttk.Button(frame_botoes_extra, text="Atualizar Lista",
+                                          command=self.atualizar_listagem_ordens)
+        btn_atualizar_ordens.pack(side=tk.LEFT, padx=5)
+
+        btn_pesquisar = ttk.Button(frame_botoes_extra, text="Pesquisar Ordem", command=self.pesquisar_ordem)
+        btn_pesquisar.pack(side=tk.LEFT, padx=5)
+
+        frame_listagem_pdfs = ttk.LabelFrame(self.window, text="Listagem de PDFs Gerados")
+        frame_listagem_pdfs.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
+
+        self.listbox_pdfs = tk.Listbox(frame_listagem_pdfs, width=100, height=11)
+        self.listbox_pdfs.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+
+        btn_atualizar_pdfs = ttk.Button(frame_listagem_pdfs, text="Atualizar Lista de PDFs",
+                                        command=self.atualizar_listagem_pdfs)
+        btn_atualizar_pdfs.pack(side=tk.LEFT, padx=5)
+
+        btn_imprimir_pdf = ttk.Button(frame_listagem_pdfs, text="Imprimir PDF", command=self.imprimir_pdf)
+        btn_imprimir_pdf.pack(side=tk.LEFT, padx=5)
+
+    def validar_entradas(self):
+        if not self.entry_nome.get() or not self.entry_cpf_cnpj.get():
+            messagebox.showwarning("Aviso", "Os campos Nome e CPF/CNPJ são obrigatórios.")
+            return False
+        return True
+
+    def cadastrar_ordem(self):
+        if not self.validar_entradas():
+            return
+
+        self.cursor.execute('''
+            INSERT INTO ordens_servico (nome_cliente, cpf_cnpj, telefone, endereco, email, marca, modelo, numero_serie, defeito, relatorio, data_inicio, data_final, status, data_criacao)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            self.entry_nome.get(),
+            self.entry_cpf_cnpj.get(),
+            self.entry_telefone.get(),
+            self.entry_endereco.get(),
+            self.entry_email.get(),
+            self.entry_marca.get(),
+            self.entry_modelo.get(),
+            self.entry_numero_serie.get(),
+            self.entry_defeito.get(),
+            self.entry_relatorio.get(),
+            self.entry_data_inicio.get(),
+            self.entry_data_final.get(),
+            self.combobox_status.get(),
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ))
+
+        self.conn.commit()
+        self.limpar_campos()
+        self.atualizar_listagem_ordens()
+        messagebox.showinfo("Sucesso", "Ordem de serviço cadastrada com sucesso!")
+
+    def cadastrar_ordem(self):
+        if self.validar_entradas():
+            nome = self.entry_nome.get()
+            cpf_cnpj = self.entry_cpf_cnpj.get()
+            telefone = self.entry_telefone.get()
+            endereco = self.entry_endereco.get()
+            email = self.entry_email.get()
+            marca = self.entry_marca.get()
+            modelo = self.entry_modelo.get()
+            numero_serie = self.entry_numero_serie.get()
+            defeito = self.entry_defeito.get()
+            status = self.combobox_status.get()
+            data_criacao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            self.cursor.execute('''
+                INSERT INTO ordens_servico (nome_cliente, cpf_cnpj, telefone, endereco, email, marca, modelo, numero_serie, defeito, status, data_criacao)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+            nome, cpf_cnpj, telefone, endereco, email, marca, modelo, numero_serie, defeito, status, data_criacao))
+            self.conn.commit()
+            self.atualizar_listagem_ordens()
+            self.limpar_campos()
+
+    def editar_ordem(self):
+        if self.validar_entradas():
+            try:
+                # Obter o índice selecionado previamente
+                index = self.index_selecionado
+                if index is None:
+                    raise IndexError("Nenhuma ordem de serviço selecionada.")
+
+                ordem_id = self.listbox_ordens.get(index).split(' ')[0]
+
+                nome = self.entry_nome.get()
+                cpf_cnpj = self.entry_cpf_cnpj.get()
+                telefone = self.entry_telefone.get()
+                endereco = self.entry_endereco.get()
+                email = self.entry_email.get()
+                marca = self.entry_marca.get()
+                modelo = self.entry_modelo.get()
+                numero_serie = self.entry_numero_serie.get()
+                defeito = self.entry_defeito.get()
+                relatorio = self.entry_relatorio.get()
+                status = self.combobox_status.get()
+
+                self.cursor.execute('''
+                    UPDATE ordens_servico
+                    SET nome_cliente=?, cpf_cnpj=?, telefone=?, endereco=?, email=?, marca=?, modelo=?, numero_serie=?, defeito=?, relatorio=?, status=?
+                    WHERE id=?
+                ''', (
+                    nome, cpf_cnpj, telefone, endereco, email, marca, modelo, numero_serie, defeito, relatorio, status, ordem_id))
+                self.conn.commit()
+                self.atualizar_listagem_ordens()
+                self.limpar_campos()
+                self.index_selecionado ()  # Limpar a seleção após a edição
+            except IndexError:
+                messagebox.showerror("Erro", "Selecione uma ordem de serviço para editar.")
+    def excluir_ordem(self):
+        try:
+            index = self.listbox_ordens.curselection()[0]
+            ordem_id = self.listbox_ordens.get(index).split(' ')[0]
+
+            self.cursor.execute('DELETE FROM ordens_servico WHERE id=?', (ordem_id,))
+            self.conn.commit()
+            self.atualizar_listagem_ordens()
+            self.limpar_campos()
+        except IndexError:
+            messagebox.showerror("Erro", "Selecione uma ordem de serviço para excluir.")
+
+    def selecionar_ordem(self, event):
+        try:
+            ordem_selecionada = self.listbox_ordens.curselection()[0]
+            ordem_id = self.listbox_ordens.get(ordem_selecionada).split()[0]
+        except IndexError:
+            return
+
+        self.cursor.execute('SELECT * FROM ordens_servico WHERE id=?', (ordem_id,))
+        ordem = self.cursor.fetchone()
+
+        if ordem:
+            self.entry_nome.delete(0, tk.END)
+            self.entry_nome.insert(0, ordem[1])
+
+            self.entry_cpf_cnpj.delete(0, tk.END)
+            self.entry_cpf_cnpj.insert(0, ordem[2])
+
+            self.entry_telefone.delete(0, tk.END)
+            self.entry_telefone.insert(0, ordem[3])
+
+            self.entry_endereco.delete(0, tk.END)
+            self.entry_endereco.insert(0, ordem[4])
+
+            self.entry_email.delete(0, tk.END)
+            self.entry_email.insert(0, ordem[5])
+
+            self.entry_marca.delete(0, tk.END)
+            self.entry_marca.insert(0, ordem[6])
+
+            self.entry_modelo.delete(0, tk.END)
+            self.entry_modelo.insert(0, ordem[7])
+
+            self.entry_numero_serie.delete(0, tk.END)
+            self.entry_numero_serie.insert(0, ordem[8])
+
+            self.entry_defeito.delete(0, tk.END)
+            self.entry_defeito.insert(0, ordem[9])
+
+            self.combobox_status.set(ordem[10])
+
+    def preencher_campos(self, ordem):
+        self.entry_nome.delete(0, tk.END)
+        self.entry_nome.insert(0, ordem[1])
+        self.entry_cpf_cnpj.delete(0, tk.END)
+        self.entry_cpf_cnpj.insert(0, ordem[2])
+        self.entry_telefone.delete(0, tk.END)
+        self.entry_telefone.insert(0, ordem[3])
+        self.entry_endereco.delete(0, tk.END)
+        self.entry_endereco.insert(0, ordem[4])
+        self.entry_email.delete(0, tk.END)
+        self.entry_email.insert(0, ordem[5])
+        self.entry_marca.delete(0, tk.END)
+        self.entry_marca.insert(0, ordem[6])
+        self.entry_modelo.delete(0, tk.END)
+        self.entry_modelo.insert(0, ordem[7])
+        self.entry_numero_serie.delete(0, tk.END)
+        self.entry_numero_serie.insert(0, ordem[8])
+        self.entry_defeito.delete(0, tk.END)
+        self.entry_defeito.insert(0, ordem[9])
+        self.entry_relatorio.delete(0, tk.END)
+        self.entry_relatorio.insert(0, ordem[10])
+        self.entry_data_inicio.delete(0, tk.END)
+        self.entry_data_inicio.insert(0, ordem[11])
+        self.entry_data_final.delete(0, tk.END)
+        self.entry_data_final.insert(0, ordem[12])
+        self.combobox_status.set(ordem[13])
+
+    def limpar_campos(self):
+        self.entry_nome.delete(0, tk.END)
+        self.entry_cpf_cnpj.delete(0, tk.END)
+        self.entry_telefone.delete(0, tk.END)
+        self.entry_endereco.delete(0, tk.END)
+        self.entry_email.delete(0, tk.END)
+        self.entry_marca.delete(0, tk.END)
+        self.entry_modelo.delete(0, tk.END)
+        self.entry_numero_serie.delete(0, tk.END)
+        self.entry_defeito.delete(0, tk.END)
+        self.entry_relatorio.delete(0, tk.END)
+        self.entry_data_inicio.delete(0, tk.END)
+        self.entry_data_final.delete(0, tk.END)
+        self.combobox_status.set("Aberta")
+        self.combobox_status.set("Fechada")
+
+    def atualizar_listagem_ordens(self):
+        self.listbox_ordens.delete(0, tk.END)
+        self.cursor.execute('SELECT id, nome_cliente, cpf_cnpj, telefone, endereco, email, marca, modelo, '
+                            'numero_serie, defeito, status, data_criacao FROM ordens_servico')
+        for row in self.cursor.fetchall():
+            self.listbox_ordens.insert(tk.END, f"{row[0]} - {row[1]} - {row[2]} - {row[3]}")
+
+    def gerar_pdf(self):
+        try:
+            ordem_selecionada = self.listbox_ordens.curselection()[0]
+            ordem_id = self.listbox_ordens.get(ordem_selecionada).split()[0]
+            self.cursor.execute('SELECT * FROM ordens_servico WHERE id = ?', (ordem_id,))
+            ordem = self.cursor.fetchone()
+        except IndexError:
+            messagebox.showwarning("Aviso", "Nenhuma ordem de serviço selecionada.")
+            return
+
+        if not os.path.exists("pdfs_gerados"):
+            os.makedirs("pdfs_gerados")
+
+        caminho_arquivo = os.path.join("pdfs_gerados", f"ordem_servico_{ordem[0]}.pdf")
+        c = canvas.Canvas(caminho_arquivo, pagesize=letter)
+        altura = letter[1]
+
+        if os.path.exists(self.logo_path):
+            c.drawImage(ImageReader(self.logo_path), 40, altura - 70, width=120, height=80)
+
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(200, altura - 120, "Ordem de Serviço")
+
+        c.setFont("Helvetica", 19)
+        c.drawString(40, altura - 730, f"ID: {ordem[0]}")
+        c.drawString(40, altura - 710, f"Nome do Cliente: {ordem[1]}")
+        c.drawString(40, altura - 690, f"CPF/CNPJ: {ordem[2]}")
+        c.drawString(40, altura - 670, f"Telefone: {ordem[3]}")
+        c.drawString(40, altura - 650, f"Endereço: {ordem[4]}")
+        c.drawString(40, altura - 630, f"E-mail: {ordem[5]}")
+        c.drawString(40, altura - 610, f"Marca: {ordem[6]}")
+        c.drawString(40, altura - 590, f"Modelo: {ordem[7]}")
+        c.drawString(40, altura - 570, f"Número de Série: {ordem[8]}")
+        c.drawString(40, altura - 550, f"Defeito Informado: {ordem[9]}")
+        c.drawString(40, altura - 530, f"Relatório do Serviço: {ordem[10]}")
+        c.drawString(40, altura - 510, f"Data de Início: {ordem[11]}")
+        c.drawString(40, altura - 490, f"Data de Finalização: {ordem[12]}")
+        c.drawString(40, altura - 470, f"Status: {ordem[13]}")
+        c.drawString(40, altura - 450, f"Data de Criação: {ordem[14]}")
+
+
+        c.showPage()
+        c.save()
+
+        self.atualizar_listagem_pdfs()
+
+        messagebox.showinfo("Sucesso", f"PDF gerado com sucesso: {caminho_arquivo}")
+
+    def atualizar_listagem_pdfs(self):
+        self.listbox_pdfs.delete(0, tk.END)
+        if not os.path.exists("pdfs_gerados"):
+            os.makedirs("pdfs_gerados")
+        for arquivo in os.listdir("pdfs_gerados"):
+            if arquivo.endswith(".pdf"):
+                self.listbox_pdfs.insert(tk.END, arquivo)
+
+    def imprimir_pdf(self):
+        try:
+            pdf_selecionado = self.listbox_pdfs.curselection()[0]
+            pdf_path = os.path.join("pdfs_gerados", self.listbox_pdfs.get(pdf_selecionado))
+        except IndexError:
+            messagebox.showwarning("Aviso", "Nenhum PDF selecionado.")
+            return
+
+        impressora_selecionada = selecionar_impressora()
+        if impressora_selecionada:
+            win32print.SetDefaultPrinter(impressora_selecionada)
+            win32api.ShellExecute("print", pdf_path, None, ".", 0)
+            messagebox.showinfo("Sucesso", f"PDF enviado para a impressora: {impressora_selecionada}")
+
+    def pesquisar_ordem(self):
+        termo_pesquisa = simpledialog.askstring("Pesquisar Ordem", "Digite o nome ou CPF/CNPJ do cliente:")
+        if termo_pesquisa:
+            self.listbox_ordens.delete(0, tk.END)
+            self.cursor.execute('''
+                SELECT id, nome_cliente, cpf_cnpj, telefone, status FROM ordens_servico
+                WHERE nome_cliente LIKE ? OR cpf_cnpj LIKE ?
+            ''', (f"%{termo_pesquisa}%", f"%{termo_pesquisa}%"))
+            for row in self.cursor.fetchall():
+                self.listbox_ordens.insert(tk.END, f"{row[0]} - {row[1]} - {row[2]} - {row[3]} - {row[4]}")
+
+    def carregar_logotipo(self):
+
+        self.logo_image = Image.open(self.logo_path)
+        self.logo_photo = ImageTk.PhotoImage(self.logo_image)
+        self.logo_label = tk.Label(self.window, image=self.logo_photo)
+        self.logo_label.grid(row=4, column=0, pady=0, padx=0, sticky=tk.N)
+
+    def configurar_imagem_de_fundo(self):
+        if os.path.exists(self.background_path):
+            img_background = Image.open(self.background_path)
+            img_background = img_background.resize((1024, 768), Image.ANTIALIAS)
+            self.background_image = ImageTk.PhotoImage(img_background)
+            self.label_background = tk.Label(self.window, image=self.background_image)
+            self.label_background.place(relwidth=1, relheight=1)
+
+    def atualizar_informacoes_programa(self):
+        info_texto = f"Versão: {self.versao}\n" \
+                     f"Data de Criação: {self.data_criacao}\n" \
+                     f"Criado por: {self.nome_criador}\n" \
+                     f"Telefone: {self.telefone_criador}\n" \
+                     f"E-mail: {self.email_criador}"
+        self.label_info = tk.Label(self.window, text=info_texto, bg="#ADD8E6", justify=tk.LEFT)
+        self.label_info.grid(row=4, column=1, pady=10, padx=10, sticky=tk.N)
+
+
+if __name__ == "__main__":
+    app = GerenciadorOrdensServico()
