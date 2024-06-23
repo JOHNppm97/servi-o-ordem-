@@ -1,0 +1,263 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+class ServicoApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Ordem de Serviço")
+
+        self.notebook = ttk.Notebook(root)
+        self.tab_cliente = ttk.Frame(self.notebook)
+        self.tab_nova_os = ttk.Frame(self.notebook)
+        self.tab_pecas_produtos = ttk.Frame(self.notebook)
+        self.tab_servicos = ttk.Frame(self.notebook)
+        self.tab_historico_os = ttk.Frame(self.notebook)
+        self.tab_clientes_cadastrados = ttk.Frame(self.notebook)
+        self.tab_pecas_cadastradas = ttk.Frame(self.notebook)
+        self.tab_servicos_cadastrados = ttk.Frame(self.notebook)
+
+        self.notebook.add(self.tab_cliente, text="Cliente")
+        self.notebook.add(self.tab_nova_os, text="Nova OS")
+        self.notebook.add(self.tab_pecas_produtos, text="Peças e Produtos")
+        self.notebook.add(self.tab_servicos, text="Serviços")
+        self.notebook.add(self.tab_historico_os, text="Histórico de OS")
+        self.notebook.add(self.tab_clientes_cadastrados, text="Clientes Cadastrados")
+        self.notebook.add(self.tab_pecas_cadastradas, text="Peças Cadastradas")
+        self.notebook.add(self.tab_servicos_cadastrados, text="Serviços Cadastrados")
+
+        self.notebook.pack(expand=1, fill="both")
+
+        self.create_cliente_tab()
+        self.create_nova_os_tab()
+        self.create_pecas_produtos_tab()
+        self.create_servicos_tab()
+        self.create_historico_os_tab()
+        self.create_clientes_cadastrados_tab(self.tab_clientes_cadastrados)
+        self.create_pecas_cadastradas_tab(self.tab_pecas_cadastradas)
+        self.create_servicos_cadastrados_tab(self.tab_servicos_cadastrados)
+
+    def create_cliente_tab(self):
+        # Interface para a aba de clientes
+        self.label_nome = ttk.Label(self.tab_cliente, text="Nome:")
+        self.entry_nome = ttk.Entry(self.tab_cliente)
+        self.label_telefone = ttk.Label(self.tab_cliente, text="Telefone:")
+        self.entry_telefone = ttk.Entry(self.tab_cliente)
+        self.label_email = ttk.Label(self.tab_cliente, text="E-mail:")
+        self.entry_email = ttk.Entry(self.tab_cliente)
+        self.label_cpf = ttk.Label(self.tab_cliente, text="CPF:")
+        self.entry_cpf = ttk.Entry(self.tab_cliente)
+        self.label_endereco = ttk.Label(self.tab_cliente, text="Endereço:")
+        self.entry_endereco = ttk.Entry(self.tab_cliente)
+        self.button_salvar_cliente = ttk.Button(self.tab_cliente, text="Salvar", command=self.salvar_cliente)
+        self.button_limpar_cliente = ttk.Button(self.tab_cliente, text="Limpar", command=self.limpar_campos_cliente)
+
+        self.label_nome.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_nome.grid(row=0, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_telefone.grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_telefone.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_email.grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_email.grid(row=2, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_cpf.grid(row=3, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_cpf.grid(row=3, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_endereco.grid(row=4, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_endereco.grid(row=4, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.button_salvar_cliente.grid(row=5, column=0, padx=5, pady=5, sticky=tk.EW)
+        self.button_limpar_cliente.grid(row=5, column=1, padx=5, pady=5, sticky=tk.EW)
+
+    def create_nova_os_tab(self):
+        # Interface para a aba de nova OS
+        self.label_numero_os = ttk.Label(self.tab_nova_os, text="Número OS:")
+        self.entry_numero_os = ttk.Entry(self.tab_nova_os)
+        self.label_servico = ttk.Label(self.tab_nova_os, text="Descrição do Serviço:")
+        self.entry_servico = ttk.Entry(self.tab_nova_os)
+        self.label_data = ttk.Label(self.tab_nova_os, text="Data:")
+        self.entry_data = ttk.Entry(self.tab_nova_os)
+        self.label_equipamento = ttk.Label(self.tab_nova_os, text="Equipamento:")
+        self.entry_equipamento = ttk.Entry(self.tab_nova_os)
+        self.label_marca = ttk.Label(self.tab_nova_os, text="Marca:")
+        self.entry_marca = ttk.Entry(self.tab_nova_os)
+        self.label_modelo = ttk.Label(self.tab_nova_os, text="Modelo:")
+        self.entry_modelo = ttk.Entry(self.tab_nova_os)
+        self.label_serie = ttk.Label(self.tab_nova_os, text="Número de Série:")
+        self.entry_serie = ttk.Entry(self.tab_nova_os)
+        self.button_salvar_os = ttk.Button(self.tab_nova_os, text="Salvar", command=self.salvar_os)
+        self.button_limpar_os = ttk.Button(self.tab_nova_os, text="Limpar", command=self.limpar_campos_os)
+
+        self.label_numero_os.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_numero_os.grid(row=0, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_servico.grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_servico.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_data.grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_data.grid(row=2, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_equipamento.grid(row=3, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_equipamento.grid(row=3, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_marca.grid(row=4, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_marca.grid(row=        4, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_modelo.grid(row=5, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_modelo.grid(row=5, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_serie.grid(row=6, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_serie.grid(row=6, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.button_salvar_os.grid(row=7, column=0, padx=5, pady=5, sticky=tk.EW)
+        self.button_limpar_os.grid(row=7, column=1, padx=5, pady=5, sticky=tk.EW)
+
+    def create_pecas_produtos_tab(self):
+        # Interface para a aba de peças e produtos
+        self.label_produto = ttk.Label(self.tab_pecas_produtos, text="Produto:")
+        self.entry_produto = ttk.Entry(self.tab_pecas_produtos)
+        self.label_marca_produto = ttk.Label(self.tab_pecas_produtos, text="Marca:")
+        self.entry_marca_produto = ttk.Entry(self.tab_pecas_produtos)
+        self.label_modelo_produto = ttk.Label(self.tab_pecas_produtos, text="Modelo:")
+        self.entry_modelo_produto = ttk.Entry(self.tab_pecas_produtos)
+        self.label_preco_produto = ttk.Label(self.tab_pecas_produtos, text="Preço (R$):")
+        self.entry_preco_produto = ttk.Entry(self.tab_pecas_produtos)
+        self.label_lucro_produto = ttk.Label(self.tab_pecas_produtos, text="Lucro (R$):")
+        self.entry_lucro_produto = ttk.Entry(self.tab_pecas_produtos)
+        self.label_observacao_produto = ttk.Label(self.tab_pecas_produtos, text="Observação:")
+        self.entry_observacao_produto = ttk.Entry(self.tab_pecas_produtos)
+        self.button_salvar_peca = ttk.Button(self.tab_pecas_produtos, text="Salvar", command=self.salvar_peca)
+        self.button_limpar_peca = ttk.Button(self.tab_pecas_produtos, text="Limpar", command=self.limpar_campos_peca)
+
+        self.label_produto.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_produto.grid(row=0, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_marca_produto.grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_marca_produto.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_modelo_produto.grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_modelo_produto.grid(row=2, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_preco_produto.grid(row=3, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_preco_produto.grid(row=3, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_lucro_produto.grid(row=4, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_lucro_produto.grid(row=4, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_observacao_produto.grid(row=5, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_observacao_produto.grid(row=5, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.button_salvar_peca.grid(row=6, column=0, padx=5, pady=5, sticky=tk.EW)
+        self.button_limpar_peca.grid(row=6, column=1, padx=5, pady=5, sticky=tk.EW)
+
+    def create_servicos_tab(self):
+        # Interface para a aba de serviços
+        self.label_descricao_servico = ttk.Label(self.tab_servicos, text="Descrição do Serviço:")
+        self.entry_descricao_servico = ttk.Entry(self.tab_servicos)
+        self.label_preco_servico = ttk.Label(self.tab_servicos, text="Preço (R$):")
+        self.entry_preco_servico = ttk.Entry(self.tab_servicos)
+        self.label_observacao_servico = ttk.Label(self.tab_servicos, text="Observação:")
+        self.entry_observacao_servico = ttk.Entry(self.tab_servicos)
+        self.button_salvar_servico = ttk.Button(self.tab_servicos, text="Salvar", command=self.salvar_servico)
+        self.button_limpar_servico = ttk.Button(self.tab_servicos, text="Limpar", command=self.limpar_campos_servico)
+
+        self.label_descricao_servico.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_descricao_servico.grid(row=0, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_preco_servico.grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_preco_servico.grid(row=1, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.label_observacao_servico.grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+        self.entry_observacao_servico.grid(row=2, column=1, padx=5, pady=5, sticky=tk.EW)
+        self.button_salvar_servico.grid(row=3, column=0, padx=5, pady=5, sticky=tk.EW)
+        self.button_limpar_servico.grid(row=3, column=1, padx=5, pady=5, sticky=tk.EW)
+
+    def create_historico_os_tab(self):
+        # Interface para a aba de histórico de OS
+        self.historico_listbox = tk.Listbox(self.tab_historico_os)
+        self.historico_listbox.pack(expand=True, fill='both', padx=5, pady=5)
+
+    def create_clientes_cadastrados_tab(self, tab):
+        # Interface para a aba de clientes cadastrados
+        self.clientes_listbox = tk.Listbox(tab)
+        self.clientes_listbox.pack(expand=True, fill='both', padx=5, pady=5)
+
+    def create_pecas_cadastradas_tab(self, tab):
+        # Interface para a aba de peças cadastradas
+        self.pecas_listbox = tk.Listbox(tab)
+        self.pecas_listbox.pack(expand=True, fill='both', padx=5, pady=5)
+
+    def create_servicos_cadastrados_tab(self, tab):
+        # Interface para a aba de serviços cadastrados
+        self.servicos_listbox = tk.Listbox(tab)
+        self.servicos_listbox.pack(expand=True, fill='both', padx=5, pady=5)
+
+    def salvar_cliente(self):
+        # Função para salvar um novo cliente
+        nome = self.entry_nome.get()
+        telefone = self.entry_telefone.get()
+        email = self.entry_email.get()
+        cpf = self.entry_cpf.get()
+        endereco = self.entry_endereco.get()
+
+        # Adicione aqui a lógica para salvar o cliente no banco de dados ou em outro local
+        # Por enquanto, apenas exibimos uma mensagem de exemplo
+        messagebox.showinfo("Salvar Cliente", f"Cliente '{nome}' salvo com sucesso!")
+
+    def limpar_campos_cliente(self):
+        # Função para limpar os campos de entrada na aba de clientes
+        self.entry_nome.delete(0, tk.END)
+        self.entry_telefone.delete(0, tk.END)
+        self.entry_email.delete(0, tk.END)
+        self.entry_cpf.delete(0, tk.END)
+        self.entry_endereco.delete(0, tk.END)
+
+    def salvar_os(self):
+        # Função para salvar uma nova ordem de serviço
+        numero_os = self.entry_numero_os.get()
+        servico = self.entry_servico.get()
+        data = self.entry_data.get()
+        equipamento = self.entry_equipamento.get()
+        marca = self.entry_marca.get()
+        modelo = self.entry_modelo.get()
+        serie = self.entry_serie.get()
+
+        # Adicione aqui a lógica para salvar a ordem de serviço no banco de dados ou em outro local
+        # Por enquanto, apenas exibimos uma mensagem de exemplo
+        messagebox.showinfo("Salvar OS", f"OS '{numero_os}' salva com sucesso!")
+
+    def limpar_campos_os(self):
+        # Função para limpar os campos de entrada na aba de nova OS
+        self.entry_numero_os.delete(0, tk.END)
+        self.entry_servico.delete(0, tk.END)
+        self.entry_data.delete(0, tk.END)
+        self.entry_equipamento.delete(0, tk.END)
+        self.entry_marca.delete(0, tk.END)
+        self.entry_modelo.delete(0, tk.END)
+        self.entry_serie.delete(0, tk.END)
+
+    def salvar_peca(self):
+        # Função para salvar uma nova peça ou produto
+        produto = self.entry_produto.get()
+        marca = self.entry_marca_produto.get()
+        modelo = self.entry_modelo_produto.get()
+        preco = self.entry_preco_produto.get()
+        lucro = self.entry_lucro_produto.get()
+        observacao = self.entry_observacao_produto.get()
+
+        # Adicione aqui a lógica para salvar a peça ou produto no banco de dados ou em outro local
+        # Por enquanto, apenas exibimos uma mensagem de exemplo
+        messagebox.showinfo("Salvar Peça", f"Peça '{produto}' salva com sucesso!")
+
+    def limpar_campos_peca(self):
+        # Função para limpar os campos de entrada na aba de peças e produtos
+        self.entry_produto.delete(0, tk.END)
+        self.entry_marca_produto.delete(0, tk.END)
+        self.entry_modelo_produto.delete(0, tk.END)
+        self.entry_preco_produto.delete(0, tk.END)
+        self.entry_lucro_produto.delete(0, tk.END)
+        self.entry_observacao_produto.delete(0, tk.END)
+
+    def salvar_servico(self):
+        # Função para salvar um novo serviço
+        descricao = self.entry_descricao_servico.get()
+        preco = self.entry_preco_servico.get()
+        observacao = self.entry_observacao_servico.get()
+
+        # Adicione aqui a lógica para salvar o serviço no banco de dados ou em outro local
+        # Por enquanto, apenas exibimos uma mensagem de exemplo
+        messagebox.showinfo("Salvar Serviço", f"Serviço '{descricao}' salvo com sucesso!")
+
+    def limpar_campos_servico(self):
+        # Função para limpar os campos de entrada na aba de serviços
+        self.entry_descricao_servico.delete(0, tk.END)
+        self.entry_preco_servico.delete(0, tk.END)
+        self.entry_observacao_servico.delete(0, tk.END)
+
+    # Inicialização da aplicação
+    if __name__ == "__main__":
+        root = tk.Tk()
+        app = ServicoApp(root)
+        root.mainloop()
+
+
